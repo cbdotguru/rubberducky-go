@@ -14,5 +14,4 @@ func TestMain(t *testing.T) {
 	if got != want {
 		t.Fatalf("Got '%v', expected '%v'", got, want)
 	}
-
 }
