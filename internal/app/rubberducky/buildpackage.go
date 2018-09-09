@@ -32,6 +32,7 @@ type PackageInfo struct {
 
 type ArtifactInfo struct {
 	ABI              []*ethcontract.ABIObject      `json:"abi"`
+	Address          string                        `json:"address"`
 	Bytecode         string                        `json:"bytecode"`
 	DeployedBytecode string                        `json:"deployedBytecode"`
 	ContractName     string                        `json:"contractName"`
@@ -86,7 +87,7 @@ func BuildPackage(artifactname string, solidityname string) (string, error) {
 	pkg := make([]byte, info.Size())
 	_, err = file.Read(pkg)
 	if err != nil {
-		err = fmt.Errorf("Could not read file '%v': '%v'", artifactpath, err)
+		err = fmt.Errorf("Could not read file '%v': '%v'", nodepackagepath, err)
 		return "", err
 	}
 	pkgObject := PackageInfo{}
