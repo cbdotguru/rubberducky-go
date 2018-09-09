@@ -45,4 +45,4 @@ This tool relies on the core [build of ethpm-go found here](https://github.com/e
 
 ## Feedback
 
-Any feedback would be appreciated here. Feel free to use issues and PR's or email me at contact@modulartech.io. I'm interested to here whether or not this was a worthwhile endeavor.
+Any feedback would be appreciated here. Feel free to use issues and PR's or email me at contact@modulartech.io. I'm interested to hear whether or not this was a worthwhile endeavor.
