@@ -3,6 +3,7 @@ package rubberducky
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -40,44 +41,90 @@ type ArtifactInfo struct {
 	Compiler         *bytecode.CompilerInformation `json:"compiler"`
 }
 
-// BuildPackage TODO some comments
-func BuildPackage(artifactname string, solidityname string) (string, error) {
+// BuildAndWritePackage TODO some comments
+func BuildAndWritePackage(directoryname string) error {
+	json, err := buildPackage(directoryname)
+	if err != nil {
+		return err
+	}
+
+	err = writePackage(directoryname, json)
+	return err
+}
+
+func buildPackage(directoryname string) (string, error) {
 	var dir string
 	var err error
 	var pmstring string
-	fmt.Println()
+	var artifactpath string
+	var nodepackagepath string
+
+	pm := ethpm.PackageManifest{}
+	contracttype := ethcontract.ContractType{}
+	contracttypes := make(map[string]*ethcontract.ContractType)
+	dbc := bytecode.UnlinkedBytecode{}
+	rbc := bytecode.UnlinkedBytecode{}
+
 	if os.Getenv("TEST") != TRUEENV {
-		dir, err = os.Getwd()
-		fmt.Println(dir)
+		dir, _ = os.Getwd()
 		if err != nil {
-			err = fmt.Errorf("Could not get the working directory: '%v'", err)
+			err = fmt.Errorf("Could not access working directory: '%v'", err)
 			return "", err
 		}
+		artifactpath = dir + "/" + directoryname + "/build/contracts/"
 	} else {
-		dir = "../../../test/testdata"
+		artifactpath = "../../../test/testdata/build/contracts/"
 	}
-	artifactpath := dir + "/build/contracts/" + artifactname + ".json"
+	artifactpath = filepath.FromSlash(artifactpath)
+	files, err := ioutil.ReadDir(artifactpath)
+	if err != nil {
+		err = fmt.Errorf("Could not access directory: '%v'", err)
+		return "", err
+	}
+
 	var file *os.File
 	var info os.FileInfo
-	file, err = os.Open(filepath.FromSlash(artifactpath))
-	if err != nil {
-		err = fmt.Errorf("Could not open file '%v': '%v'", artifactpath, err)
-		return "", err
+	artifactObjects := []ArtifactInfo{}
+	for i, f := range files {
+		name := f.Name()
+
+		file, err = os.Open(artifactpath + name)
+		if err != nil {
+			err = fmt.Errorf("First, tell Bryant I said hi, and second, this could not open file '%v': '%v'", artifactpath, err)
+			return "", err
+		}
+		info, _ = file.Stat()
+		artifact := make([]byte, info.Size())
+		_, err = file.Read(artifact)
+		if err != nil {
+			err = fmt.Errorf("Could not read file '%v': '%v'", artifactpath, err)
+			return "", err
+		}
+		tempao := ArtifactInfo{}
+		err = json.Unmarshal(artifact, &tempao)
+		if err != nil {
+			err = fmt.Errorf("Could not unpackage truffle artifact: '%v'", err)
+			return "", err
+		}
+		contracttype.ABI = tempao.ABI
+		compiler := tempao.Compiler
+		dbc.Bytecode = tempao.DeployedBytecode
+		rbc.Bytecode = tempao.Bytecode
+
+		contracttype.Compiler = compiler
+		contracttype.RuntimeBytecode = &dbc
+		contracttype.DeploymentBytecode = &rbc
+		artifactname := name[:len(name)-5]
+		contracttypes[artifactname] = &contracttype
+		artifactObjects = append(artifactObjects, tempao)
+		fmt.Printf("%v+\n", artifactObjects[i])
 	}
-	info, _ = file.Stat()
-	artifact := make([]byte, info.Size())
-	_, err = file.Read(artifact)
-	if err != nil {
-		err = fmt.Errorf("Could not read file '%v': '%v'", artifactpath, err)
-		return "", err
+
+	if os.Getenv("TEST") != TRUEENV {
+		nodepackagepath = dir + "/" + directoryname + "/package.json"
+	} else {
+		nodepackagepath = "../../../test/testdata/package.json"
 	}
-	artifactObject := ArtifactInfo{}
-	err = json.Unmarshal(artifact, &artifactObject)
-	if err != nil {
-		err = fmt.Errorf("Could not unpackage truffle artifact: '%v'", err)
-		return "", err
-	}
-	nodepackagepath := dir + "/package.json"
 	file, err = os.Open(filepath.FromSlash(nodepackagepath))
 	if err != nil {
 		err = fmt.Errorf("Could not open file '%v': '%v'", nodepackagepath, err)
@@ -96,10 +143,8 @@ func BuildPackage(artifactname string, solidityname string) (string, error) {
 		err = fmt.Errorf("Could not unpackage package.json: '%v'", err)
 		return "", err
 	}
-	fmt.Printf("%v+\n", artifactObject)
-	fmt.Printf("%v+\n", pkgObject)
 
-	pm := ethpm.PackageManifest{}
+	fmt.Printf("%v+\n", pkgObject)
 
 	author := make([]string, 1)
 	author[0] = pkgObject.Author["name"]
@@ -117,11 +162,10 @@ func BuildPackage(artifactname string, solidityname string) (string, error) {
 	sources := make(map[string]string)
 	var commithashpath string
 	if os.Getenv("TEST") != "true" {
-		commithashpath = dir + "/.git/refs/heads/master"
+		commithashpath = dir + "/" + directoryname + "/.git/refs/heads/master"
 	} else {
-		commithashpath = dir + "/master"
+		commithashpath = "../../../test/testdata/master"
 	}
-
 	file, err = os.Open(filepath.FromSlash(commithashpath))
 	if err != nil {
 		err = fmt.Errorf("Could not open file '%v': '%v'", commithashpath, err)
@@ -136,20 +180,26 @@ func BuildPackage(artifactname string, solidityname string) (string, error) {
 	}
 	commitbytes = commitbytes[:len(commitbytes)-1]
 	commit := string(commitbytes)
-	sources["./contracts/"+solidityname+".sol"] = pkgObject.Homepage + ".git@" + commit
+
+	var contractpath string
+	if os.Getenv("TEST") != "true" {
+		contractpath = dir + "/" + directoryname + "/contracts/"
+	} else {
+		contractpath = "../../../test/testdata/contracts/"
+	}
+
+	files, err = ioutil.ReadDir(contractpath)
+	if err != nil {
+		err = fmt.Errorf("Could not access directory: '%v'", err)
+		return "", err
+	}
+
+	for _, f := range files {
+		name := f.Name()
+		sources["./contracts/"+name] = pkgObject.Homepage + ".git@" + commit
+	}
 	pm.Sources = sources
-	contracttype := ethcontract.ContractType{}
-	contracttype.ABI = artifactObject.ABI
-	compiler := artifactObject.Compiler
-	contracttype.Compiler = compiler
-	dbc := bytecode.UnlinkedBytecode{}
-	dbc.Bytecode = artifactObject.DeployedBytecode
-	contracttype.RuntimeBytecode = &dbc
-	rbc := bytecode.UnlinkedBytecode{}
-	rbc.Bytecode = artifactObject.Bytecode
-	contracttype.DeploymentBytecode = &rbc
-	contracttypes := make(map[string]*ethcontract.ContractType)
-	contracttypes[artifactname] = &contracttype
+
 	pm.ContractTypes = contracttypes
 	pmstring, err = pm.Write()
 	if err != nil {
@@ -160,12 +210,11 @@ func BuildPackage(artifactname string, solidityname string) (string, error) {
 	return pmstring, nil
 }
 
-// WritePackage TODO some comments
-func WritePackage(json string) error {
+func writePackage(directoryname string, json string) error {
 	var p *os.File
 	var err error
 	if os.Getenv("TEST") != "true" {
-		p, err = os.Create("./ethpm.json")
+		p, err = os.Create(directoryname + "/ethpm.json")
 	} else {
 		p, err = os.Create("../../../test/testdata/ethpm.json")
 	}
