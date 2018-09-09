@@ -42,17 +42,17 @@ type ArtifactInfo struct {
 }
 
 // BuildAndWritePackage TODO some comments
-func BuildAndWritePackage(directoryname string) error {
-	json, err := buildPackage(directoryname)
+func BuildAndWritePackage(directoryname string, packagename string) (string, error) {
+	name, json, err := buildPackage(directoryname, packagename)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	err = writePackage(directoryname, json)
-	return err
+	return name, err
 }
 
-func buildPackage(directoryname string) (string, error) {
+func buildPackage(directoryname string, packagename string) (string, string, error) {
 	var dir string
 	var err error
 	var pmstring string
@@ -69,7 +69,7 @@ func buildPackage(directoryname string) (string, error) {
 		dir, _ = os.Getwd()
 		if err != nil {
 			err = fmt.Errorf("Could not access working directory: '%v'", err)
-			return "", err
+			return "", "", err
 		}
 		artifactpath = dir + "/" + directoryname + "/build/contracts/"
 	} else {
@@ -79,7 +79,7 @@ func buildPackage(directoryname string) (string, error) {
 	files, err := ioutil.ReadDir(artifactpath)
 	if err != nil {
 		err = fmt.Errorf("Could not access directory: '%v'", err)
-		return "", err
+		return "", "", err
 	}
 
 	var file *os.File
@@ -91,20 +91,20 @@ func buildPackage(directoryname string) (string, error) {
 		file, err = os.Open(artifactpath + name)
 		if err != nil {
 			err = fmt.Errorf("First, tell Bryant I said hi, and second, this could not open file '%v': '%v'", artifactpath, err)
-			return "", err
+			return "", "", err
 		}
 		info, _ = file.Stat()
 		artifact := make([]byte, info.Size())
 		_, err = file.Read(artifact)
 		if err != nil {
 			err = fmt.Errorf("Could not read file '%v': '%v'", artifactpath, err)
-			return "", err
+			return "", "", err
 		}
 		tempao := ArtifactInfo{}
 		err = json.Unmarshal(artifact, &tempao)
 		if err != nil {
 			err = fmt.Errorf("Could not unpackage truffle artifact: '%v'", err)
-			return "", err
+			return "", "", err
 		}
 		contracttype.ABI = tempao.ABI
 		compiler := tempao.Compiler
@@ -128,20 +128,20 @@ func buildPackage(directoryname string) (string, error) {
 	file, err = os.Open(filepath.FromSlash(nodepackagepath))
 	if err != nil {
 		err = fmt.Errorf("Could not open file '%v': '%v'", nodepackagepath, err)
-		return "", err
+		return "", "", err
 	}
 	info, _ = file.Stat()
 	pkg := make([]byte, info.Size())
 	_, err = file.Read(pkg)
 	if err != nil {
 		err = fmt.Errorf("Could not read file '%v': '%v'", nodepackagepath, err)
-		return "", err
+		return "", "", err
 	}
 	pkgObject := PackageInfo{}
 	err = json.Unmarshal(pkg, &pkgObject)
 	if err != nil {
 		err = fmt.Errorf("Could not unpackage package.json: '%v'", err)
-		return "", err
+		return "", "", err
 	}
 
 	fmt.Printf("%v+\n", pkgObject)
@@ -150,7 +150,7 @@ func buildPackage(directoryname string) (string, error) {
 	author[0] = pkgObject.Author["name"]
 	theMeta := &ethpm.PackageMeta{}
 
-	pm.PackageName = pkgObject.Name
+	pm.PackageName = packagename
 	pm.Version = pkgObject.Version
 	theMeta.Authors = author
 	theMeta.License = pkgObject.License
@@ -169,14 +169,14 @@ func buildPackage(directoryname string) (string, error) {
 	file, err = os.Open(filepath.FromSlash(commithashpath))
 	if err != nil {
 		err = fmt.Errorf("Could not open file '%v': '%v'", commithashpath, err)
-		return "", err
+		return "", "", err
 	}
 	info, _ = file.Stat()
 	commitbytes := make([]byte, info.Size())
 	_, err = file.Read(commitbytes)
 	if err != nil {
 		err = fmt.Errorf("Could not read file '%v': '%v'", commithashpath, err)
-		return "", err
+		return "", "", err
 	}
 	commitbytes = commitbytes[:len(commitbytes)-1]
 	commit := string(commitbytes)
@@ -191,7 +191,7 @@ func buildPackage(directoryname string) (string, error) {
 	files, err = ioutil.ReadDir(contractpath)
 	if err != nil {
 		err = fmt.Errorf("Could not access directory: '%v'", err)
-		return "", err
+		return "", "", err
 	}
 
 	for _, f := range files {
@@ -205,9 +205,9 @@ func buildPackage(directoryname string) (string, error) {
 	if err != nil {
 		err = fmt.Errorf("Could not write object: '%v'", err)
 		fmt.Println(err)
-		return "", err
+		return "", "", err
 	}
-	return pmstring, nil
+	return packagename, pmstring, nil
 }
 
 func writePackage(directoryname string, json string) error {

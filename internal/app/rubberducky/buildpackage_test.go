@@ -11,7 +11,7 @@ func TestBuildPackage(t *testing.T) {
 	os.Setenv("TEST", "true")
 	var got string
 	var err error
-	got, err = buildPackage("Test")
+	_, got, err = buildPackage("Test", "ethereum-libraries-basic-math")
 	if err != nil {
 		fmt.Println(err)
 	}

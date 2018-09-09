@@ -83,6 +83,14 @@
   revision = "274b289c317b232ce824b0849416b48af870bde3"
 
 [[projects]]
+  digest = "1:865079840386857c809b72ce300be7580cb50d3d3129ce11bf9aa6ca2bc1934a"
+  name = "github.com/fatih/color"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "5b77d2a35fb0ede96d138fc9a99f5c9b6aef11b4"
+  version = "v1.7.0"
+
+[[projects]]
   branch = "master"
   digest = "1:0e46990e9f1b0c4f6f84003ba9c7b5e5b8adccbcfb3595b6f0d2312080356bfb"
   name = "github.com/fjl/memsize"
@@ -336,6 +344,7 @@
     "github.com/ethpm/ethpm-go/pkg/bytecode",
     "github.com/ethpm/ethpm-go/pkg/ethcontract",
     "github.com/ethpm/ethpm-go/pkg/ethpm",
+    "github.com/fatih/color",
     "github.com/urfave/cli",
     "golang.org/x/crypto/ssh/terminal",
   ]
