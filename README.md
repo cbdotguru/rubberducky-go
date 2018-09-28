@@ -28,8 +28,9 @@ RubberDucky is a cli tool which will currently package a truffle project into th
 3. Ensure your `$GOPATH` is set.
 4. `go get github.com/Hackdom/rubberducky-go`
 5. `cd $GOPATH/src/github.com/Hackdom/rubberducky-go`
-	* You will notice the vendor folder was committed. There are several unstable dependencies that have been fixed which are not fully committed on github, therefore, keep the vendor folder to use those dependencies and don't `dep ensure`.
-6. There are several possibilities for execution:
+	* You will notice the vendor folder was committed. There are several unstable dependencies that have been fixed which are not fully committed on github, therefore, keep the vendor folder to use those dependencies and don't `dep ensure`.   
+6. Run `go install`
+7. There are several possibilities for execution:
 	* If your `$GOPATH/bin` is in your `$PATH` then you should do following:
 		1. Change to the parent directory of your truffle projects
 		2. Run `rubberducky` and follow the prompts. The first prompt asks for a relative path to a truffle project, so if you followed this, you should type `./<yourTruffleProject>`
@@ -45,4 +46,4 @@ This tool relies on the core [build of ethpm-go found here](https://github.com/e
 
 ## Feedback
 
-Any feedback would be appreciated here. Feel free to use issues and PR's or email me at contact@modulartech.io. I'm interested to here whether or not this was a worthwhile endeavor.
+Any feedback would be appreciated here. Feel free to use issues and PR's or email me at contact@modulartech.io. I'm interested to hear whether or not this was a worthwhile endeavor.
