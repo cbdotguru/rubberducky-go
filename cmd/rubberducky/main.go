@@ -24,7 +24,8 @@ func main() {
 	app.Name = "rubberducky"
 	app.Usage = "finally share code on Ethereum!"
 	app.Action = func(c *cli.Context) error {
-		banner.Init(os.Stdout, true, true, bytes.NewBufferString("{{ .AnsiColor.Yellow }}{{ .AnsiBackground.Black }}      ,~~.                                                                          \n{{ .AnsiColor.Yellow }}{{ .AnsiBackground.Black }}     (  9 )-_,\n{{ .AnsiColor.Yellow }}{{ .AnsiBackground.Black }}(\\___ )=='-'\n{{ .AnsiColor.Yellow }}{{ .AnsiBackground.Black }} \\ .   ) )\n{{ .AnsiColor.Yellow }}{{ .AnsiBackground.Black }}  \\ `-' /\n{{ .AnsiColor.Yellow }}{{ .AnsiBackground.Black }}   `~j-'   hjw\n{{ .AnsiColor.Yellow }}{{ .AnsiBackground.Black }}    \"=:{{ .AnsiBackground.White }}\n"))
+		banner.Init(os.Stdout, true, true, bytes.NewBufferString("{{ .AnsiBackground.Black }}{{ .AnsiColor.Yellow }}      ,~~.{{ .AnsiBackground.Black }}\n{{ .AnsiColor.Yellow }}{{ .AnsiBackground.Black }}     (  9 )-_,\n{{ .AnsiColor.Yellow }}{{ .AnsiBackground.Black }}(\\___ )=='-'\n{{ .AnsiColor.Yellow }}{{ .AnsiBackground.Black }} \\ .   ) )\n{{ .AnsiColor.Yellow }}{{ .AnsiBackground.Black }}  \\ `-' /\n{{ .AnsiColor.Yellow }}{{ .AnsiBackground.Black }}   `~j-'   hjw\n{{ .AnsiColor.Yellow }}{{ .AnsiBackground.Black }}    \"=:{{ .AnsiBackground.White }}\n"))
+
 		dir, _ := os.Getwd()
 		reader := bufio.NewReader(os.Stdin)
 		color.Blue("\nPlease enter a relative path to a truffle directory (no trailing slash), currently at '" + dir + "' : ")
